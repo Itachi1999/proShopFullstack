@@ -1,0 +1,7 @@
+DB Info 
+{
+    User Name: "nasipurisoumya",
+    Password: "Soumya123",
+    mongo_uri: "mongodb+srv://nasipurisoumya:Soumya123
+                    @cluster0.1ubrejy.mongodb.net/Proshop?retryWrites=true&w=majority&appName=AtlasApp"
+}
