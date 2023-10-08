@@ -9,7 +9,7 @@ const HomeScreen = () => {
 
     useEffect(function () {
         const fetchProducts = async () => {
-            const res = await fetch("api/product");
+            const res = await fetch("/api/product");
             const data = await res.json();
             setProducts(data);
         };
