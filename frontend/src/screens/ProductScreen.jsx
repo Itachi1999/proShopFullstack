@@ -1,51 +1,177 @@
 // import React from 'react'
-import { useParams, Link } from "react-router-dom";
-import { Row, Col, ListGroup, Image, Card } from "react-bootstrap";
-import { useEffect, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import {
+    Form,
+    Row,
+    Col,
+    ListGroup,
+    Image,
+    Card,
+    Button,
+} from "react-bootstrap";
+import { useGetProductDetailsQuery } from "../slices/productApiSlice";
+import Loader from "../components/Loader";
+import Message from "../components/Message";
+import Rating from "../components/Rating";
+import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { addToCart } from "../slices/cartSlice";
+// import { useEffect, useState } from "react";
 // import products from "../products";
 
 const ProductScreen = () => {
     const params = useParams();
-    console.log(params);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    // console.log(params);
     const productId = params.id;
-    console.log(productId);
+    // console.log(productId);
+    const [qty, setQty] = useState(1);
     // const product = products.find((p) => p._id === productId);
 
-    const [product, setProduct] = useState({});
+    // const [product, setProduct] = useState({});
 
-    useEffect(
-        function () {
-            const fetchProduct = async () => {
-                const res = await fetch(`/api/product/${productId}`);
-                const data = await res.json();
+    // useEffect(
+    //     function () {
+    //         const fetchProduct = async () => {
+    //             const res = await fetch(`/api/product/${productId}`);
+    //             const data = await res.json();
 
-                setProduct(data);
-            };
+    //             setProduct(data);
+    //         };
 
-            fetchProduct();
-        },
-        [productId]
-    );
+    //         fetchProduct();
+    //     },
+    //     [productId]
+    // );
+    const {
+        data: product,
+        isLoading,
+        error,
+    } = useGetProductDetailsQuery(productId);
+    console.log(product);
+
+    function addToCartHandler() {
+        dispatch(addToCart({ ...product, qty })); // spreading the product object so that the qty gets added
+        navigate("/cart");
+    }
 
     return (
         <>
-            <Link to="/" className="btn btn-secondary my-3">
-                Go Back
-            </Link>
-            <Row>
-                <Col md={5}>
-                    <Image
-                        src={product.image}
-                        fluid
-                        rounded
-                        alt={product.name}
-                    />
-                </Col>
-                <Col md={4}>
-                    <ListGroup></ListGroup>
-                </Col>
-                <Col md={3}></Col>
-            </Row>
+            {/* <Message variant="warning">Hello</Message> */}
+            {isLoading ? (
+                <Loader />
+            ) : error ? (
+                <Message variant="danger">
+                    {error?.data?.message || error.error}
+                </Message>
+            ) : (
+                <>
+                    <Link to="/" className="btn btn-secondary my-3">
+                        Go Back
+                    </Link>
+                    <Row>
+                        <Col md={5}>
+                            <Image
+                                src={product.image}
+                                fluid
+                                rounded
+                                alt={product.name}
+                            />
+                        </Col>
+                        <Col md={4}>
+                            <ListGroup variant="flush">
+                                <ListGroup.Item>
+                                    <h3>{product.name}</h3>
+                                </ListGroup.Item>
+                                <ListGroup.Item>
+                                    <Rating
+                                        rating={product.rating}
+                                        text={`${product.numReviews} reviews`}
+                                    />
+                                </ListGroup.Item>
+                                <ListGroup.Item>
+                                    Price: ${product.price}
+                                </ListGroup.Item>
+                                <ListGroup.Item>
+                                    Description: {product.description}
+                                </ListGroup.Item>
+                            </ListGroup>
+                        </Col>
+                        <Col md={3}>
+                            <Card>
+                                <ListGroup variant="flush">
+                                    <ListGroup.Item>
+                                        <Row>
+                                            <Col>Price:</Col>
+                                            <Col>
+                                                <strong>
+                                                    ${product.price}
+                                                </strong>
+                                            </Col>
+                                        </Row>
+                                    </ListGroup.Item>
+                                    <ListGroup.Item>
+                                        <Row>
+                                            <Col>Status:</Col>
+                                            <Col>
+                                                <strong>
+                                                    {product.countInStock > 0
+                                                        ? "In Stock"
+                                                        : "Out of Stock"}
+                                                </strong>
+                                            </Col>
+                                        </Row>
+                                    </ListGroup.Item>
+                                    <ListGroup.Item>
+                                        <Row>
+                                            <Col>Quantity</Col>
+                                            <Col>
+                                                <Form.Control
+                                                    as="select"
+                                                    value={qty}
+                                                    onChange={(e) =>
+                                                        setQty(
+                                                            Number(
+                                                                e.target.value
+                                                            )
+                                                        )
+                                                    }
+                                                >
+                                                    {[
+                                                        ...Array(
+                                                            product.countInStock
+                                                        ).keys(),
+                                                    ].map((x) => (
+                                                        <option
+                                                            value={x + 1}
+                                                            key={x + 1} //Index starts from 0, in keys()
+                                                        >
+                                                            {x + 1}
+                                                        </option>
+                                                    ))}
+                                                </Form.Control>
+                                            </Col>
+                                        </Row>
+                                    </ListGroup.Item>
+                                    <ListGroup.Item>
+                                        <Button
+                                            className="btn-block btn-dark"
+                                            type="button"
+                                            disabled={
+                                                product.countInStock === 0
+                                            }
+                                            onClick={addToCartHandler}
+                                        >
+                                            Add to Cart
+                                        </Button>
+                                    </ListGroup.Item>
+                                </ListGroup>
+                            </Card>
+                        </Col>
+                    </Row>
+                </>
+            )}
         </>
     );
 };
